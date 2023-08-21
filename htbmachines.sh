@@ -27,6 +27,7 @@ function helpPanel(){
   echo -e "\t${purpleColour}m)${endColour}${grayColour} Buscar por un nombre de maquina${endColour}"
   echo -e "\t${purpleColour}i)${endColour}${grayColour} Buscar por direccion IP${endColour}"
   echo -e "\t${purpleColour}d)${endColour}${grayColour} Buscar por dificultad de una máquina${endColour}"
+  echo -e "\t${purpleColour}o)${endColour}${grayColour} Buscar por el sistema operativo${endColour}"
   echo -e "\t${purpleColour}y)${endColour}${grayColour} Obtener link de la resolución de la máquina en youtube${endColour}"
   echo -e "\t${purpleColour}h)${endColour}${grayColour} Mostrar este panel de ayuda${endColour}\n"
 }
@@ -133,12 +134,23 @@ function getYoutubeLink(){
 
 function getMachinesDifficulty(){
   difficulty="$1"
-  results_check="$(cat bundle.js | grep "dificultad: \"$difficulty\"" -B 5 | grep name | awk 'NF {print $NF}' | tr -d '"' | tr -d ',' | column)"
+  results_check="$(cat bundle.js | grep "dificultad: \"$difficulty\"" -B 5 | grep "name:" | awk 'NF {print $NF}' | tr -d '"' | tr -d ',' | column)"
   if [ "$results_check" ]; then
     echo -e "\n${yellowColour}[+]${endColour}${grayColour} Representando las máquinas que poseen un nivel de dificultad${endColour}${purpleColour} $difficulty${endColour}${grayColour}:${endColour}\n" 
-    cat bundle.js | grep "dificultad: \"$difficulty\"" -B 5 | grep name | awk 'NF {print $NF}' | tr -d '"' | tr -d ',' | column
+    cat bundle.js | grep "dificultad: \"$difficulty\"" -B 5 | grep "name:" | awk 'NF {print $NF}' | tr -d '"' | tr -d ',' | column
   else 
     echo -e "\n${redColour}[+] La dificultad indicada no existe${endColour}\n"
+  fi
+}
+
+function getOSMachines(){
+  os="$1"
+  os_results="$(cat bundle.js | grep "so: \"$os\"" -B 5 | grep "name: " | awk 'NF {print $NF}' | tr -d '"' | tr -d ',' | column)"
+  if [ "$os_results" ]; then
+    echo -e "\n${yellowColour}[+]${endColour}${grayColour} Mostrando las máquinas cuyo sistema operativo es:${endColour}${greenColour} $os${endColour}\n"
+    cat bundle.js | grep "so: \"$os\"" -B 5 | grep "name: " | awk 'NF {print $NF}' | tr -d '"' | tr -d ',' | column
+  else
+    echo -e "\n${redColour}[!] EL sistema operativo indicado no existe${endColour}\n"
   fi
 }
 
@@ -146,13 +158,14 @@ function getMachinesDifficulty(){
 declare -i parameter_counter=0
 
 
-while getopts "m:ui:y:d:h" arg; do
+while getopts "m:ui:y:d:o:h" arg; do
   case $arg in
     m) machineName="$OPTARG"; let parameter_counter+=1;;
     u) let parameter_counter+=2;;
     i) ipAddress="$OPTARG"; let parameter_counter+=3;;
     y) machineName="$OPTARG"; let parameter_counter+=4;;
     d) difficulty="$OPTARG"; let parameter_counter+=5;;
+    o) os="$OPTARG"; let parameter_counter+=6;;
     h) ;;
   esac
 done
@@ -167,6 +180,8 @@ elif [ $parameter_counter -eq 4 ]; then
   getYoutubeLink $machineName
 elif [ $parameter_counter -eq 5 ]; then
   getMachinesDifficulty $difficulty
+elif [ $parameter_counter -eq 6 ]; then
+  getOSMachines $os
 else
   helpPanel
 fi
