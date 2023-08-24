@@ -24,8 +24,8 @@ main_url="https://htbmachines.github.io/bundle.js"
 function helpPanel(){
   echo -e "\n${yellowColour}[+]${endColour}${grayColour} Uso:${endColour}"
   echo -e "\t${purpleColour}u)${endColour}${grayColour} Descargar o actualizar archivos necesarios${endColour}"
-  echo -e "\t${purpleColour}m)${endColour}${grayColour} Buscar por un nombre de maquina${endColour}"
-  echo -e "\t${purpleColour}i)${endColour}${grayColour} Buscar por direccion IP${endColour}"
+  echo -e "\t${purpleColour}m)${endColour}${grayColour} Buscar por un nombre de máquina${endColour}"
+  echo -e "\t${purpleColour}i)${endColour}${grayColour} Buscar por dirección IP${endColour}"
   echo -e "\t${purpleColour}d)${endColour}${grayColour} Buscar por dificultad de una máquina${endColour}"
   echo -e "\t${purpleColour}o)${endColour}${grayColour} Buscar por el sistema operativo${endColour}"
   echo -e "\t${purpleColour}y)${endColour}${grayColour} Obtener link de la resolución de la máquina en youtube${endColour}"
@@ -154,9 +154,25 @@ function getOSMachines(){
   fi
 }
 
+function getOSDifficultyMachines(){
+  difficulty="$1"
+  os="$2"
+  check_results="$(cat bundle.js | grep "so: \"$os\"" -C 4 | grep "dificultad: \"$difficulty\"" -B 5 | grep "name: " | awk 'NF {print $NF}' | tr -d '"' | tr -d ',' | column)"
+  if [ "$check_results" ]; then
+    echo -e "\n${yellowColour}[+]${endColour}${grayColour} Listando máquinas de dificultad${endColour}${greenColour} $difficulty${endColour}${grayColour} que tengan sistema operativo${endColour}${redColour} $os${endColour}:\n"
+    cat bundle.js | grep "so: \"$os\"" -C 4 | grep "dificultad: \"$difficulty\"" -B 5 | grep "name: " | awk 'NF {print $NF}' | tr -d '"' | tr -d ',' | column
+  else 
+    echo -e "\n${redColour}[!] Se ha indicado una dificultad o sistema operativo incorrectos${endColour}\n"
+  fi
+  #echo -e "\n[!] Se va aplicar una búsqueda por la dificultad $difficulty y los sistemas operativos que sean $os\n"
+}
+
 # Indicadores
 declare -i parameter_counter=0
 
+# Chivatos
+declare -i chivato_difficulty=0
+declare -i chivato_os=0
 
 while getopts "m:ui:y:d:o:h" arg; do
   case $arg in
@@ -164,8 +180,8 @@ while getopts "m:ui:y:d:o:h" arg; do
     u) let parameter_counter+=2;;
     i) ipAddress="$OPTARG"; let parameter_counter+=3;;
     y) machineName="$OPTARG"; let parameter_counter+=4;;
-    d) difficulty="$OPTARG"; let parameter_counter+=5;;
-    o) os="$OPTARG"; let parameter_counter+=6;;
+    d) difficulty="$OPTARG";  chivato_difficulty=1; let parameter_counter+=5;;
+    o) os="$OPTARG"; chivato_os=1; let parameter_counter+=6;;
     h) ;;
   esac
 done
@@ -182,6 +198,8 @@ elif [ $parameter_counter -eq 5 ]; then
   getMachinesDifficulty $difficulty
 elif [ $parameter_counter -eq 6 ]; then
   getOSMachines $os
+elif [ $chivato_difficulty -eq 1 ] && [ $chivato_os -eq 1 ]; then
+  getOSDifficultyMachines $difficulty $os
 else
   helpPanel
 fi
